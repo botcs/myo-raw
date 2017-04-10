@@ -288,14 +288,21 @@ class MyoRaw(object):
                 gyro = vals[7:10]
                 self.on_imu(quat, acc, gyro)
             elif attr == 0x23:
-                typ, val, xdir = unpack('3B', pay)
+                typ, val, xdir = unpack('3B', pay[:3])
+		try:
 
-                if typ == 1: # on arm
-                    self.on_arm(Arm(val), XDirection(xdir))
-                elif typ == 2: # removed from arm
-                    self.on_arm(Arm.UNKNOWN, XDirection.UNKNOWN)
-                elif typ == 3: # pose
-                    self.on_pose(Pose(val))
+                    if typ == 1: # on arm
+                        self.on_arm(Arm(str(val)), XDirection(xdir))
+                    elif typ == 2: # removed from arm
+                        self.on_arm(Arm.UNKNOWN, XDirection.UNKNOWN)
+                    elif typ == 3: # pose
+                        self.on_pose(Pose(str(val)))
+                except enum.EnumBadKeyError as e:
+		    print('ERROR\n\n\n')
+	    	    print(e)
+		    print(val)
+		    print(xdir)
+ 
             else:
                 print('data with unknown attr: %02X %s' % (attr, p))
 
@@ -404,6 +411,7 @@ if __name__ == '__main__':
         from pygame.locals import *
         HAVE_PYGAME = True
     except ImportError:
+	# print 'IMPORT ERROR pygame'
         HAVE_PYGAME = False
 
     if HAVE_PYGAME:
@@ -456,7 +464,7 @@ if __name__ == '__main__':
     m.connect()
 
     m.add_arm_handler(lambda arm, xdir: print('arm', arm, 'xdir', xdir))
-    m.add_pose_handler(lambda p: print('pose', p))
+    m.add_pose_handler(lambda p: print('poseHANDLER', p))
 
     try:
         while True:
